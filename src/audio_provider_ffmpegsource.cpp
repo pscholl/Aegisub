@@ -90,6 +90,8 @@ void FFmpegSourceAudioProvider::LoadAudio(agi::fs::path const& filename) {
 			throw agi::AudioDataNotFound(ErrInfo.Buffer);
 	}
 
+  FFMS_TrackTypeIndexSettings(Indexer, FFMS_TYPE_AUDIO, 1, 0);
+
 	std::map<int, std::string> TrackList = GetTracksOfType(Indexer, FFMS_TYPE_AUDIO);
 
 	// initialize the track number to an invalid value so we can detect later on
@@ -154,40 +156,15 @@ void FFmpegSourceAudioProvider::LoadAudio(agi::fs::path const& filename) {
 	sample_rate	= AudioInfo.SampleRate;
 	num_samples = AudioInfo.NumSamples;
 	decoded_samples = AudioInfo.NumSamples;
+	bytes_per_sample = AudioInfo.BitsPerSample / 8;
+	float_samples = AudioInfo.SampleFormat == FFMS_FMT_DBL || AudioInfo.SampleFormat == FFMS_FMT_FLT;
+
 	if (channels <= 0 || sample_rate <= 0 || num_samples <= 0)
 		throw agi::AudioProviderError("sanity check failed, consult your local psychiatrist");
-
-	switch (AudioInfo.SampleFormat) {
-		case FFMS_FMT_U8:  bytes_per_sample = 1; float_samples = false; break;
-		case FFMS_FMT_S16: bytes_per_sample = 2; float_samples = false; break;
-		case FFMS_FMT_S32: bytes_per_sample = 4; float_samples = false; break;
-		case FFMS_FMT_FLT: bytes_per_sample = 4; float_samples = true; break;
-		case FFMS_FMT_DBL: bytes_per_sample = 8; float_samples = true; break;
-		default:
-			throw agi::AudioProviderError("unknown or unsupported sample format");
-	}
-
-#if FFMS_VERSION >= ((2 << 24) | (17 << 16) | (4 << 8) | 0)
-	if (channels > 1 || bytes_per_sample != 2) {
-		std::unique_ptr<FFMS_ResampleOptions, decltype(&FFMS_DestroyResampleOptions)>
-			opt(FFMS_CreateResampleOptions(AudioSource), FFMS_DestroyResampleOptions);
-		opt->ChannelLayout = FFMS_CH_FRONT_CENTER;
-		opt->SampleFormat = FFMS_FMT_S16;
-
-		// Might fail if FFMS2 wasn't built with libavresample
-		if (!FFMS_SetOutputFormatA(AudioSource, opt.get(), nullptr)) {
-			channels = 1;
-			bytes_per_sample = 2;
-			float_samples = false;
-		}
-	}
-#endif
 }
-
 }
 
 std::unique_ptr<agi::AudioProvider> CreateFFmpegSourceAudioProvider(agi::fs::path const& file, agi::BackgroundRunner *br) {
 	return agi::make_unique<FFmpegSourceAudioProvider>(file, br);
 }
-
 #endif /* WITH_FFMS2 */

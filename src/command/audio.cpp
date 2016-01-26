@@ -136,11 +136,11 @@ struct audio_view_spectrum final : public Command {
 	CMD_TYPE(COMMAND_RADIO)
 
 	bool IsActive(const agi::Context *) override {
-		return OPT_GET("Audio/Spectrum")->GetBool();
+		return OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_SPECTRUM";
 	}
 
 	void operator()(agi::Context *) override {
-		OPT_SET("Audio/Spectrum")->SetBool(true);
+		OPT_SET("Audio/Type")->SetString("AUDIO_TYPE_SPECTRUM");
 	}
 };
 
@@ -152,11 +152,27 @@ struct audio_view_waveform final : public Command {
 	CMD_TYPE(COMMAND_RADIO)
 
 	bool IsActive(const agi::Context *) override {
-		return !OPT_GET("Audio/Spectrum")->GetBool();
+		return OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_WAVEFORM";
 	}
 
 	void operator()(agi::Context *) override {
-		OPT_SET("Audio/Spectrum")->SetBool(false);
+		OPT_SET("Audio/Type")->SetString("AUDIO_TYPE_WAVEFORM");
+	}
+};
+
+struct audio_view_horizonplot final : public Command {
+	CMD_NAME("audio/view/horizonplot")
+	STR_MENU("&Horizon Plot Display")
+	STR_DISP("Horizon Plot Display")
+	STR_HELP("Display audio channels as multiple overlapping waves")
+	CMD_TYPE(COMMAND_RADIO)
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_HORIZON";
+	}
+
+	void operator()(agi::Context *) override {
+		OPT_SET("Audio/Type")->SetString("AUDIO_TYPE_HORIZON");
 	}
 };
 
@@ -481,22 +497,22 @@ struct audio_autonext final : public Command {
 	}
 };
 
-struct audio_toggle_spectrum final : public Command {
-	CMD_NAME("audio/opt/spectrum")
-	CMD_ICON(toggle_audio_spectrum)
-	STR_MENU("Spectrum analyzer mode")
-	STR_DISP("Spectrum analyzer mode")
-	STR_HELP("Spectrum analyzer mode")
-	CMD_TYPE(COMMAND_TOGGLE)
-
-	bool IsActive(const agi::Context *) override {
-		return OPT_GET("Audio/Spectrum")->GetBool();
-	}
-
-	void operator()(agi::Context *) override {
-		toggle("Audio/Spectrum");
-	}
-};
+// struct audio_toggle_spectrum final : public Command {
+// 	CMD_NAME("audio/opt/spectrum")
+// 	CMD_ICON(toggle_audio_spectrum)
+// 	STR_MENU("Spectrum analyzer mode")
+// 	STR_DISP("Spectrum analyzer mode")
+// 	STR_HELP("Spectrum analyzer mode")
+// 	CMD_TYPE(COMMAND_TOGGLE)
+// 
+// 	bool IsActive(const agi::Context *) override {
+// 		return OPT_GET("Audio/Spectrum")->GetBool();
+// 	}
+// 
+// 	void operator()(agi::Context *) override {
+// 		toggle("Audio/Spectrum");
+// 	}
+// };
 
 struct audio_vertical_link final : public Command {
 	CMD_NAME("audio/opt/vertical_link")
@@ -562,9 +578,10 @@ namespace cmd {
 		reg(agi::make_unique<audio_scroll_left>());
 		reg(agi::make_unique<audio_scroll_right>());
 		reg(agi::make_unique<audio_stop>());
-		reg(agi::make_unique<audio_toggle_spectrum>());
+		//reg(agi::make_unique<audio_toggle_spectrum>());
 		reg(agi::make_unique<audio_vertical_link>());
 		reg(agi::make_unique<audio_view_spectrum>());
 		reg(agi::make_unique<audio_view_waveform>());
+		reg(agi::make_unique<audio_view_horizonplot>());
 	}
 }

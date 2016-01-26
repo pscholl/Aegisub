@@ -182,6 +182,7 @@
         {},
         { "command" : "audio/view/spectrum" },
         { "command" : "audio/view/waveform" },
+        { "command" : "audio/view/horizonplot" },
         { "command" : "audio/open/blank" },
         { "command" : "audio/open/noise" }
     ],

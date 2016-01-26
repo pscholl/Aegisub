@@ -740,7 +740,7 @@ void AudioDisplay::ReloadRenderingSettings()
 {
 	std::string colour_scheme_name;
 
-	if (OPT_GET("Audio/Spectrum")->GetBool())
+	if (OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_SPECTRUM")
 	{
 		colour_scheme_name = OPT_GET("Colour/Audio Display/Spectrum")->GetString();
 		auto audio_spectrum_renderer = agi::make_unique<AudioSpectrumRenderer>(colour_scheme_name);
@@ -761,6 +761,9 @@ void AudioDisplay::ReloadRenderingSettings()
 			spectrum_distance[spectrum_quality]);
 
 		audio_renderer_provider = std::move(audio_spectrum_renderer);
+	}
+	else if (OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_HORIZON")
+	{
 	}
 	else
 	{
@@ -1224,7 +1227,7 @@ void AudioDisplay::OnAudioOpen(agi::AudioProvider *provider)
 				controller->AddPlaybackPositionListener(&AudioDisplay::OnPlaybackPosition, this),
 				controller->AddPlaybackStopListener(&AudioDisplay::RemoveTrackCursor, this),
 				controller->AddTimingControllerListener(&AudioDisplay::OnTimingController, this),
-				OPT_SUB("Audio/Spectrum", &AudioDisplay::ReloadRenderingSettings, this),
+				OPT_SUB("Audio/Type", &AudioDisplay::ReloadRenderingSettings, this),
 				OPT_SUB("Audio/Display/Waveform Style", &AudioDisplay::ReloadRenderingSettings, this),
 				OPT_SUB("Colour/Audio Display/Spectrum", &AudioDisplay::ReloadRenderingSettings, this),
 				OPT_SUB("Colour/Audio Display/Waveform", &AudioDisplay::ReloadRenderingSettings, this),

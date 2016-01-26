@@ -78,7 +78,7 @@
 			"Distance" : 10,
 			"Enable" : false
 		},
-		"Spectrum" : true,
+		"Type" : "AUDIO_TYPE_SPECTRUM",
 		"Start Drag Sensitivity" : 3,
 		"Track Cursor" : {
 			"Font Face" : ""

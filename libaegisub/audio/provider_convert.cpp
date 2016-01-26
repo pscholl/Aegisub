@@ -76,6 +76,7 @@ public:
 template<class Source, class Target>
 class FloatConvertAudioProvider final : public AudioProviderWrapper {
 	mutable std::vector<Source> src_buf;
+	mutable Source normalize = 0;
 
 public:
 	FloatConvertAudioProvider(std::unique_ptr<AudioProvider> src) : AudioProviderWrapper(std::move(src)) {
@@ -91,13 +92,15 @@ public:
 		source->GetAudio(&src_buf[0], start, count);
 
 		auto dest = static_cast<Target*>(buf);
+		for (size_t i = 0; i < static_cast<size_t>(count * channels); ++i)
+			normalize = std::max(std::abs(src_buf[i]), normalize);
 
 		for (size_t i = 0; i < static_cast<size_t>(count * channels); ++i) {
 			Source expanded;
 			if (src_buf[i] < 0)
-				expanded = static_cast<Target>(-src_buf[i] * std::numeric_limits<Target>::min());
+				expanded = static_cast<Target>(-src_buf[i] / normalize * std::numeric_limits<Target>::min());
 			else
-				expanded = static_cast<Target>(src_buf[i] * std::numeric_limits<Target>::max());
+				expanded = static_cast<Target>(src_buf[i] / normalize * std::numeric_limits<Target>::max());
 
 			dest[i] = expanded < std::numeric_limits<Target>::min() ? std::numeric_limits<Target>::min() :
 			          expanded > std::numeric_limits<Target>::max() ? std::numeric_limits<Target>::max() :
@@ -114,7 +117,7 @@ class DownmixAudioProvider final : public AudioProviderWrapper {
 public:
 	DownmixAudioProvider(std::unique_ptr<AudioProvider> src) : AudioProviderWrapper(std::move(src)) {
 		src_channels = channels;
-		channels = 1;
+		//channels = 1;
 	}
 
 	void FillBuffer(void *buf, int64_t start, int64_t count64) const override {
@@ -190,7 +193,7 @@ std::unique_ptr<AudioProvider> CreateConvertAudioProvider(std::unique_ptr<AudioP
 	// We currently only support mono audio
 	if (provider->GetChannels() != 1) {
 		LOG_D("audio_provider") << "Downmixing to mono from " << provider->GetChannels() << " channels";
-		provider = agi::make_unique<DownmixAudioProvider>(std::move(provider));
+	 	provider = agi::make_unique<DownmixAudioProvider>(std::move(provider));
 	}
 
 	// Some players don't like low sample rate audio
