@@ -117,7 +117,7 @@ class DownmixAudioProvider final : public AudioProviderWrapper {
 public:
 	DownmixAudioProvider(std::unique_ptr<AudioProvider> src) : AudioProviderWrapper(std::move(src)) {
 		src_channels = channels;
-		//channels = 1;
+		channels = 1;
 	}
 
 	void FillBuffer(void *buf, int64_t start, int64_t count64) const override {
