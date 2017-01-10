@@ -185,6 +185,9 @@ std::unique_ptr<AudioProvider> CreateConvertAudioProvider(std::unique_ptr<AudioP
 		else
 			provider = agi::make_unique<FloatConvertAudioProvider<double, int16_t>>(std::move(provider));
 	}
+
+	LOG_D("audio_provider") << "got " << provider->GetBytesPerSample() << " bytes per sample";
+
 	if (provider->GetBytesPerSample() != 2) {
 		LOG_D("audio_provider") << "Converting " << provider->GetBytesPerSample() << " bytes per sample or wrong endian to S16";
 		provider = agi::make_unique<BitdepthConvertAudioProvider<int16_t>>(std::move(provider));

@@ -34,6 +34,7 @@
 #include "audio_renderer.h"
 #include "audio_renderer_spectrum.h"
 #include "audio_renderer_waveform.h"
+#include "audio_renderer_horizonplot.h"
 #include "audio_timing.h"
 #include "compat.h"
 #include "format.h"
@@ -764,6 +765,8 @@ void AudioDisplay::ReloadRenderingSettings()
 	}
 	else if (OPT_GET("Audio/Type")->GetString() == "AUDIO_TYPE_HORIZON")
 	{
+		colour_scheme_name = OPT_GET("Colour/Audio Display/Waveform")->GetString();
+		audio_renderer_provider = agi::make_unique<AudioHorizonplotRenderer>(colour_scheme_name);
 	}
 	else
 	{
