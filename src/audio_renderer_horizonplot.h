@@ -43,8 +43,8 @@ class AudioHorizonplotRenderer final : public AudioRendererBitmapProvider {
 	/// Pre-allocated buffer for audio fetched from provider
 	std::unique_ptr<char[]> audio_buffer;
 
-	void OnSetProvider() override { audio_buffer.reset(); }
-	void OnSetMillisecondsPerPixel() override { audio_buffer.reset(); }
+	void OnSetProvider() override { if(audio_buffer.get()) audio_buffer.reset(); }
+	void OnSetMillisecondsPerPixel() override { if(audio_buffer.get()) audio_buffer.reset(); }
 
 public:
 	/// @brief Constructor

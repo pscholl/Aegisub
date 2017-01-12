@@ -149,27 +149,22 @@ public:
 	}
 
 	void FillBuffer(void *buf, int64_t start, int64_t count) const override {
-		int16_t *src, *dst = static_cast<int16_t *>(buf);
+		int16_t  srcbuf[2 * channels] = {0},
+				*dst = static_cast<int16_t *>(buf),
+				*src = count==1 ? srcbuf : dst;
 
-		// We need to always get at least two samples to be able to interpolate
-		int16_t srcbuf[2];
-		if (count == 1) {
-			source->GetAudio(srcbuf, start / 2, 2);
-			src = srcbuf;
-		}
-		else {
-			source->GetAudio(buf, start / 2, (start + count) / 2 - start / 2 + 1);
-			src = dst;
-		}
+		// We need to always get at least two samples to be able to interpolate.
+		source->GetAudio(buf, start/2, count==1 ? 2 : (start+count)/2 - start/2 + 1);
 
 		// walking backwards so that the conversion can be done in place
-		for (; count > 0; --count) {
-			auto src_index = (start + count - 1) / 2 - start / 2;
-			auto i = count - 1;
-			if ((start + i) & 1)
-				dst[i] = (int16_t)(((int32_t)src[src_index] + src[src_index + 1]) / 2);
-			else
-				dst[i] = src[src_index];
+		count *= channels;
+		for (count--; count > 0; --count) {
+			auto src_index = count/(2*channels) * channels + count%channels;
+			auto i = count;
+
+			dst[i] = ((start + i) / channels) & 1 ?
+			         (int16_t)(((int32_t)src[src_index] + src[src_index + channels]) / 2) :
+			         src[src_index];
 		}
 	}
 };
@@ -194,16 +189,16 @@ std::unique_ptr<AudioProvider> CreateConvertAudioProvider(std::unique_ptr<AudioP
 	}
 
 	// We currently only support mono audio
-	if (provider->GetChannels() != 1) {
-		LOG_D("audio_provider") << "Downmixing to mono from " << provider->GetChannels() << " channels";
-	 	provider = agi::make_unique<DownmixAudioProvider>(std::move(provider));
-	}
+	// if (provider->GetChannels() != 1) {
+	// 	LOG_D("audio_provider") << "Downmixing to mono from " << provider->GetChannels() << " channels";
+	//  	provider = agi::make_unique<DownmixAudioProvider>(std::move(provider));
+	// }
 
 	// Some players don't like low sample rate audio
-	while (provider->GetSampleRate() < 32000) {
-		LOG_D("audio_provider") << "Doubling sample rate";
-		provider = agi::make_unique<SampleDoublingAudioProvider>(std::move(provider));
-	}
+	// while (provider->GetSampleRate() < 32000) {
+	// 	LOG_D("audio_provider") << "Doubling sample rate";
+	// 	provider = agi::make_unique<SampleDoublingAudioProvider>(std::move(provider));
+	// }
 
 	return provider;
 }
