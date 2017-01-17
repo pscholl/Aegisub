@@ -24,7 +24,7 @@
 #include <algorithm>
 
 namespace agi {
-Time::Time(int time) : time(util::mid(0, time, 10 * 60 * 60 * 1000 - 1)) { }
+Time::Time(int time) : time(time) { }
 
 Time::Time(std::string const& text) {
 	int after_decimal = -1;
@@ -56,22 +56,12 @@ Time::Time(std::string const& text) {
 		time = (time * 60 + current) * 1000;
 
 	// Limit to the valid range
-	time = util::mid(0, time, 10 * 60 * 60 * 1000 - 1);
+	// time = util::mid(0, time, 10 * 60 * 60 * 1000 - 1);
 }
 
 std::string Time::GetAssFormatted(bool msPrecision) const {
-	std::string ret(10 + msPrecision, ':');
-	ret[0] = '0' + GetTimeHours();
-	ret[2] = '0' + (time % (60 * 60 * 1000)) / (60 * 1000 * 10);
-	ret[3] = '0' + (time % (10 * 60 * 1000)) / (60 * 1000);
-	ret[5] = '0' + (time % (60 * 1000)) / (1000 * 10);
-	ret[6] = '0' + (time % (10 * 1000)) / 1000;
-	ret[7] = '.';
-	ret[8] = '0' + (time % 1000) / 100;
-	ret[9] = '0' + (time % 100) / 10;
-	if (msPrecision)
-		ret[10] = '0' + time % 10;
-	return ret;
+	return format("%d:%02d:%02d.%0*d", GetTimeHours(), GetTimeMinutes(), GetTimeSeconds(),
+	                                   2+msPrecision, GetTimeMiliseconds());
 }
 
 int Time::GetTimeHours() const { return time / 3600000; }
