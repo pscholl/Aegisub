@@ -68,7 +68,7 @@ void AudioHorizonplotRenderer::Render(wxBitmap &bmp, int start, AudioRenderingSt
 	// Make sure we've got a buffer to fill with audio data
 	if (!audio_buffer)
 	{
-		size_t buffer_needed = pixel_samples * channels * provider->GetBytesPerSample() + 1;
+		size_t buffer_needed = (1+pixel_samples) * channels * provider->GetBytesPerSample();
 		audio_buffer.reset(new char[buffer_needed]);
 	}
 
@@ -87,7 +87,7 @@ void AudioHorizonplotRenderer::Render(wxBitmap &bmp, int start, AudioRenderingSt
 	for (int x = 0; x < rect.width; ++x)
 	{
 		int64_t to   = (int64_t) pixel_samples,
-				from = (int64_t) cur_sample;
+		        from = (int64_t) cur_sample;
 
 		to += to == 0;
 
