@@ -186,7 +186,7 @@ void MatroskaWrapper::GetSubtitles(agi::fs::path const& filename, AssFile *targe
 	// Find tracks
 	for (auto track : boost::irange(0u, tracks)) {
 		auto trackInfo = mkv_GetTrackInfo(file, track);
-		if (trackInfo->Type != 0x11 || trackInfo->CompEnabled) continue;
+		if (trackInfo->Type != TT_SUB || trackInfo->CompEnabled) continue;
 
 		// Known subtitle format
 		std::string CodecID(trackInfo->CodecID);
@@ -264,11 +264,58 @@ bool MatroskaWrapper::HasSubtitles(agi::fs::path const& filename) {
 		for (auto track : boost::irange(0u, tracks)) {
 			auto trackInfo = mkv_GetTrackInfo(file, track);
 
-			if (trackInfo->Type == 0x11 && !trackInfo->CompEnabled) {
+			if (trackInfo->Type == TT_SUB && !trackInfo->CompEnabled) {
 				std::string CodecID(trackInfo->CodecID);
 				if (CodecID == "S_TEXT/SSA" || CodecID == "S_TEXT/ASS" || CodecID == "S_TEXT/UTF8")
 					return true;
 			}
+		}
+	}
+	catch (...) {
+		// We don't care about why we couldn't read subtitles here
+	}
+
+	return false;
+}
+
+bool MatroskaWrapper::HasVideos(agi::fs::path const& filename) {
+	char err[2048];
+	try {
+		MkvStdIO input(filename);
+		agi::scoped_holder<MatroskaFile*, decltype(&mkv_Close)> file(mkv_Open(&input, err, sizeof(err)), mkv_Close);
+		if (!file) return false;
+
+		// Find tracks
+		auto tracks = mkv_GetNumTracks(file);
+		for (auto track : boost::irange(0u, tracks)) {
+			auto trackInfo = mkv_GetTrackInfo(file, track);
+
+			if (trackInfo->Type == TT_VIDEO)
+				return true;
+		}
+	}
+	catch (...) {
+		// We don't care about why we couldn't read subtitles here
+	}
+
+	return false;
+}
+
+
+bool MatroskaWrapper::HasAudios(agi::fs::path const& filename) {
+	char err[2048];
+	try {
+		MkvStdIO input(filename);
+		agi::scoped_holder<MatroskaFile*, decltype(&mkv_Close)> file(mkv_Open(&input, err, sizeof(err)), mkv_Close);
+		if (!file) return false;
+
+		// Find tracks
+		auto tracks = mkv_GetNumTracks(file);
+		for (auto track : boost::irange(0u, tracks)) {
+			auto trackInfo = mkv_GetTrackInfo(file, track);
+
+			if (trackInfo->Type == TT_AUDIO && !trackInfo->CompEnabled)
+				return true;
 		}
 	}
 	catch (...) {

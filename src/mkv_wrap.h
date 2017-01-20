@@ -28,8 +28,10 @@ class AssFile;
 
 class MatroskaWrapper {
 public:
-	/// Check if the file is a matroska file with at least one subtitle track
+	/// Check if the file is a matroska with at least one track of either type
 	static bool HasSubtitles(agi::fs::path const& filename);
+	static bool HasVideos(agi::fs::path const& filename);
+	static bool HasAudios(agi::fs::path const& filename);
 	/// Load subtitles from a matroska file
 	static void GetSubtitles(agi::fs::path const& filename, AssFile *target);
 };

@@ -176,8 +176,9 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 	auto load_linked = OPT_GET("App/Auto/Load Linked Files")->GetInt();
 	if (!load_linked) return;
 
-	auto audio     = context->path->MakeAbsolute(properties.audio_file, "?script");
-	auto video     = context->path->MakeAbsolute(properties.video_file, "?script");
+	auto path      = context->subsController->Filename();
+	auto audio     = context->path->MakeAbsolute(MatroskaWrapper::HasAudios(path) ? path : properties.audio_file, "?script");
+	auto video     = context->path->MakeAbsolute(MatroskaWrapper::HasVideos(path) ? path : properties.video_file, "?script");
 	auto timecodes = context->path->MakeAbsolute(properties.timecodes_file, "?script");
 	auto keyframes = context->path->MakeAbsolute(properties.keyframes_file, "?script");
 
