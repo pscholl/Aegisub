@@ -182,7 +182,8 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 	auto timecodes = context->path->MakeAbsolute(properties.timecodes_file, "?script");
 	auto keyframes = context->path->MakeAbsolute(properties.keyframes_file, "?script");
 
-	if (video == video_file && audio == audio_file && keyframes == keyframes_file && timecodes == timecodes_file)
+	if (video == video_file && audio == audio_file && keyframes == keyframes_file && timecodes == timecodes_file &&
+      !MatroskaWrapper::HasAudios(path) && !MatroskaWrapper::HasVideos(path))
 		return;
 
 	if (load_linked == 2) {
@@ -229,14 +230,12 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 	if (!timecodes.empty()) LoadTimecodes(timecodes);
 	if (!keyframes.empty()) LoadKeyframes(keyframes);
 
-	if (audio != audio_file) {
-		if (audio.empty())
-			CloseAudio();
-		else
-			DoLoadAudio(audio, false);
-	}
+	if (audio.empty())
+		CloseAudio();
 	else if (loaded_video && OPT_GET("Video/Open Audio")->GetBool() && audio_file != video_file && video_provider->HasAudio())
 		DoLoadAudio(video, true);
+	else
+		DoLoadAudio(audio, false);
 }
 
 void Project::DoLoadAudio(agi::fs::path const& path, bool quiet) {
