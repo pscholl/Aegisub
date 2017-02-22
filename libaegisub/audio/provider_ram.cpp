@@ -29,13 +29,9 @@ using namespace agi;
 #define CacheBlockSize (1 << CacheBits)
 
 class RAMAudioProvider final : public AudioProviderWrapper {
-#ifdef _MSC_VER
-	boost::container::stable_vector<char[CacheBlockSize]> blockcache;
-#else
-	boost::container::stable_vector<std::array<char, CacheBlockSize>> blockcache;
-#endif
 	std::atomic<bool> cancelled = {false};
 	std::thread decoder;
+	char *buffer;
 
 	void FillBuffer(void *buf, int64_t start, int64_t count) const override;
 
@@ -46,18 +42,18 @@ public:
 		decoded_samples = 0;
 
 		try {
-			blockcache.resize((source->GetNumSamples() * source->GetChannels() * source->GetBytesPerSample() + CacheBlockSize - 1) >> CacheBits);
+			buffer = new char[source->GetNumSamples() * source->GetChannels() * source->GetBytesPerSample()];
 		}
 		catch (std::bad_alloc const&) {
 			throw AudioProviderError("Not enough memory available to cache in RAM");
 		}
 
 		decoder = std::thread([&] {
-			int64_t readsize = CacheBlockSize / (source->GetBytesPerSample() * source->GetChannels());
-			for (size_t i = 0; i < blockcache.size(); i++) {
+			int64_t actual_read = 2<<10;
+			for (size_t i = 0; i < num_samples; i+=actual_read) {
+				actual_read = std::min<int64_t>(actual_read, num_samples - i);
 				if (cancelled) break;
-				auto actual_read = std::min<int64_t>(readsize, num_samples - i * readsize);
-				source->GetAudio(&blockcache[i][0], i * readsize, actual_read);
+				source->GetAudio(&buffer[i * bytes_per_sample * channels], i, actual_read);
 				decoded_samples += actual_read;
 			}
 		});
@@ -65,27 +61,17 @@ public:
 
 	~RAMAudioProvider() {
 		cancelled = true;
+		if (buffer) {
+			delete buffer;
+			buffer = NULL;
+		}
 		decoder.join();
 	}
 };
 
 void RAMAudioProvider::FillBuffer(void *buf, int64_t start, int64_t count) const {
-	auto charbuf = static_cast<char *>(buf);
-	for (int64_t bytes_remaining = count * bytes_per_sample * channels; bytes_remaining; ) {
-		if (start >= decoded_samples) {
-			memset(charbuf, 0, bytes_remaining);
-			break;
-		}
-
-		const int i = (start * bytes_per_sample * channels) >> CacheBits;
-		const int start_offset = (start * bytes_per_sample * channels) & (CacheBlockSize-1);
-		const int read_size = std::min<int>(bytes_remaining, CacheBlockSize - start_offset);
-
-		memcpy(charbuf, &blockcache[i][start_offset], read_size);
-		charbuf += read_size;
-		bytes_remaining -= read_size;
-		start += read_size / (bytes_per_sample * channels);
-	}
+	memcpy(buf, buffer + start * source->GetChannels() * source->GetBytesPerSample(),
+			                 count * source->GetChannels() * source->GetBytesPerSample());
 }
 }
 
