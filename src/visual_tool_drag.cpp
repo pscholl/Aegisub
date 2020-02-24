@@ -22,6 +22,7 @@
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
+#include "compat.h"
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
@@ -70,7 +71,7 @@ void VisualToolDrag::UpdateToggleButtons() {
 
 	if (to_move == button_is_move) return;
 
-	toolbar->SetToolNormalBitmap(toolbar->GetToolByPos(0)->GetId(),
+	toolbar->SetToolNormalBitmap(toolbar->GetToolByPos(1)->GetId(),
 		to_move ? ICON(visual_move_conv_move) : ICON(visual_move_conv_pos));
 	button_is_move = to_move;
 }
@@ -182,6 +183,9 @@ void VisualToolDrag::OnSelectedSetChanged() {
 void VisualToolDrag::Draw() {
 	DrawAllFeatures();
 
+	// Load colors from options
+	wxColour line_color = to_wx(line_color_primary_opt->GetColor());
+
 	// Draw connecting lines
 	for (auto& feature : features) {
 		if (feature.type == DRAG_START) continue;
@@ -203,7 +207,7 @@ void VisualToolDrag::Draw() {
 		Vector2D end = p2->pos - direction * (10 + arrow_len);
 
 		if (has_arrow) {
-			gl.SetLineColour(colour[3], 0.8f, 2);
+			gl.SetLineColour(line_color, 0.8f, 2);
 
 			// Arrow line
 			gl.DrawLine(start, end);
@@ -214,7 +218,7 @@ void VisualToolDrag::Draw() {
 		}
 		// Draw dashed line
 		else {
-			gl.SetLineColour(colour[3], 0.5f, 2);
+			gl.SetLineColour(line_color, 0.5f, 2);
 			gl.DrawDashedLine(start, end, 6);
 		}
 	}

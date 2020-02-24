@@ -225,6 +225,9 @@ void Interface(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Hide overrides symbol"), "Subtitle/Grid/Hide Overrides Char");
 	p->OptionFont(grid, "Subtitle/Grid/");
 
+	auto tl_assistant = p->PageSizer(_("Translation Assistant"));
+	p->OptionAdd(tl_assistant, _("Skip over whitespace"), "Tool/Translation Assistant/Skip Whitespace");
+
 	p->SetSizerAndFit(p->sizer);
 }
 
@@ -284,6 +287,16 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Active Line Border"), "Colour/Subtitle Grid/Active Border");
 	p->OptionAdd(grid, _("Lines"), "Colour/Subtitle Grid/Lines");
 	p->OptionAdd(grid, _("CPS Error"), "Colour/Subtitle Grid/CPS Error");
+
+	auto visual_tools = p->PageSizer(_("Visual Typesetting Tools"));
+	p->OptionAdd(visual_tools, _("Primary Lines"), "Colour/Visual Tools/Lines Primary");
+	p->OptionAdd(visual_tools, _("Secondary Lines"), "Colour/Visual Tools/Lines Secondary");
+	p->OptionAdd(visual_tools, _("Primary Highlight"), "Colour/Visual Tools/Highlight Primary");
+	p->OptionAdd(visual_tools, _("Secondary Highlight"), "Colour/Visual Tools/Highlight Secondary");
+
+	// Separate sizer to prevent the colors in the visual tools section from getting resized
+	auto visual_tools_alpha = p->PageSizer(_("Visual Typesetting Tools Alpha"));
+	p->OptionAdd(visual_tools_alpha, _("Shaded Area"), "Colour/Visual Tools/Shaded Area Alpha", 0, 1, 0.1);
 
 	p->sizer = main_sizer;
 
@@ -420,9 +433,6 @@ void Advanced_Video(wxTreebook *book, Preferences *parent) {
 
 	wxArrayString sp_choice = to_wx(SubtitlesProviderFactory::GetClasses());
 	p->OptionChoice(expert, _("Subtitles provider"), sp_choice, "Subtitle/Provider");
-
-	p->CellSkip(expert);
-	p->OptionAdd(expert, _("Force BT.601"), "Video/Force BT.601");
 
 #ifdef WITH_AVISYNTH
 	auto avisynth = p->PageSizer("Avisynth");

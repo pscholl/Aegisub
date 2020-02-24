@@ -58,7 +58,6 @@ Project::Project(agi::Context *c) : context(c) {
 	OPT_SUB("Provider/Video/FFmpegSource/Decoding Threads", &Project::ReloadVideo, this);
 	OPT_SUB("Provider/Video/FFmpegSource/Unsafe Seeking", &Project::ReloadVideo, this);
 	OPT_SUB("Subtitle/Provider", &Project::ReloadVideo, this);
-	OPT_SUB("Video/Force BT.601", &Project::ReloadVideo, this);
 	OPT_SUB("Video/Provider", &Project::ReloadVideo, this);
 }
 
@@ -413,6 +412,8 @@ void Project::LoadList(std::vector<agi::fs::path> const& files) {
 		".avi",
 		".avs",
 		".d2v",
+		".h264",
+		".hevc",
 		".m2ts",
 		".m4v",
 		".mkv",
@@ -445,11 +446,13 @@ void Project::LoadList(std::vector<agi::fs::path> const& files) {
 		".ac3",
 		".ape",
 		".dts",
+		".eac3",
 		".flac",
 		".m4a",
 		".mka",
 		".mp3",
 		".ogg",
+		".opus",
 		".w64",
 		".wav",
 		".wma"

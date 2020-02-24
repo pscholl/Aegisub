@@ -50,9 +50,17 @@ AC_SUBST(AEGISUB_COMMAND)
 AC_DEFINE_UNQUOTED([AEGISUB_COMMAND], ["${AEGISUB_COMMAND}"], [Name of the Aegisub executable])
 
 # Name of gettext catalog.
-AEGISUB_CATALOG="aegisub"
-AC_SUBST(AEGISUB_CATALOG)
-AC_DEFINE_UNQUOTED([AEGISUB_CATALOG], ["${AEGISUB_CATALOG}"], [Name of the Aegisub gettext catalog])
+# See '--enable-appimage'
+#AEGISUB_CATALOG="aegisub"
+#AC_SUBST(AEGISUB_CATALOG)
+#AC_DEFINE_UNQUOTED([AEGISUB_CATALOG], ["${AEGISUB_CATALOG}"], [Name of the Aegisub gettext catalog])
+
+# Handle location of appdata files: https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#spec-component-location
+AC_ARG_WITH(appdata-dir,
+            AS_HELP_STRING([--with-appdata-dir=PATH],[appdata file locations [PREFIX/share/metainfo]]))
+
+P_APPDATA=${with_appdata_dir:-$datarootdir/metainfo}
+AC_SUBST(P_APPDATA)
 
 # Handle location of desktop files: http://freedesktop.org/wiki/Specifications/desktop-entry-spec
 AC_ARG_WITH(desktop-dir,
@@ -334,9 +342,9 @@ AS_IF([test x$with_openal != xno], [
 #endif
 int main(void) {
   ALCdevice *device = alcOpenDevice(0);
-  if (!device) return 1;
   ALCcontext *context = alcCreateContext(device, 0);
-  if (!context) return 1;
+  alcDestroyContext(context);
+  alcCloseDevice(device);
   return 0;
 } ])
 ])
@@ -505,6 +513,7 @@ AC_PCH_FLAG([-fpch-preprocess])
 # Internationalisation support
 ##############################
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18.1])
 
 ################
 # Update checker
@@ -558,12 +567,39 @@ AC_SUBST(DEFAULT_PLAYER_AUDIO)
 # Set some friendly strings if some of the above aren't detected.
 DEFAULT_PLAYER_AUDIO=${DEFAULT_PLAYER_AUDIO:-NONE}
 
+################
+# AppImage build
+################
+# If enabled, localization and automation data is obtained from the binary's
+# path and never from the system's root. It will also install files that
+# Aegisub will lookup next to the binary, so be careful with "make install".
+AC_ARG_ENABLE(appimage,
+              AS_HELP_STRING([--enable-appimage],
+                             [Enable certain relocation settings useful for building AppImages or generic portable builds [no]]))
+
+P_DATA="$datarootdir/aegisub"
+AEGISUB_CATALOG="aegisub"
+
+AS_IF([test x$enable_appimage = xyes], [
+  AC_DEFINE([APPIMAGE_BUILD], [], [Define to enable AppImage compatible relocations])
+  P_DATA="$bindir"
+  localedir="$bindir/locale"
+  # use a different catalog name
+  AEGISUB_CATALOG="aegisub-appimage"
+])
+
+enable_appimage=${enable_appimage:-no}
+AC_SUBST(P_DATA)
+AC_SUBST(AEGISUB_CATALOG)
+AC_DEFINE_UNQUOTED([AEGISUB_CATALOG], ["${AEGISUB_CATALOG}"], [Name of the Aegisub gettext catalog])
+
 ###############
 # Misc settings
 ###############
 # Files that need substitution.
 AC_CONFIG_FILES([
 packages/desktop/aegisub.desktop.template
+packages/desktop/aegisub.appdata.xml.template
 src/libresrc/default_config_platform.json
 tools/osx-bundle.sed
 Makefile.inc
@@ -605,12 +641,13 @@ AC_MSG_RESULT([
 Configure settings
   Install prefix:        $prefix
   Revision:              $BUILD_GIT_VERSION_STRING
-  Debug                  $enable_debug
-  CFLAGS                 $CFLAGS
-  CXXFLAGS               $CXXFLAGS
-  CPPFLAGS               $CPPFLAGS
-  LDFLAGS                $LDFLAGS
-  LIBS                   $LIBS
+  Debug:                 $enable_debug
+  AppImage:              $enable_appimage
+  CFLAGS:                $CFLAGS
+  CXXFLAGS:              $CXXFLAGS
+  CPPFLAGS:              $CPPFLAGS
+  LDFLAGS:               $LDFLAGS
+  LIBS:                  $LIBS
 
 Default Settings
   Audio Player:          $DEFAULT_PLAYER_AUDIO
