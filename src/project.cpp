@@ -524,12 +524,12 @@ void Project::LoadList(std::vector<agi::fs::path> const& files) {
 			LoadTimecodes(timecodes);
 		if (!keyframes.empty())
 			LoadKeyframes(keyframes);
-	}
-
-	if (!audio.empty())
+	} else if (audio.empty() && OPT_GET("Video/Open Audio")->GetBool()) {
+    // as a last resort, load the video as audio
+		DoLoadAudio(video, true);
+  } else if (!audio.empty()) {
 		DoLoadAudio(audio, false);
-	else if (OPT_GET("Video/Open Audio")->GetBool() && audio_file != video_file)
-		DoLoadAudio(video_file, true);
+  }
 
 	if (!subs.empty())
 		LoadUnloadFiles(properties);
