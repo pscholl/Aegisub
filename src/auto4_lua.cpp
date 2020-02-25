@@ -272,8 +272,6 @@ namespace {
 		return 2;
 	}
 
-<<<<<<< HEAD
-=======
 	int lua_set_status_text(lua_State *L)
 	{
 		const agi::Context *c = get_context(L);
@@ -287,7 +285,6 @@ namespace {
 		return 0;
 	}
 
->>>>>>> upstream/master
 	int project_properties(lua_State *L)
 	{
 		const agi::Context *c = get_context(L);
